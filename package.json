@@ -1,0 +1,36 @@
+{
+  "name": "tmpl-followup",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.ts",
+    "clean": "tsc --build --clean && rimraf ./build",
+    "build": "npm run clean && tsc --build --force",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^18.11.17",
+    "@typescript-eslint/eslint-plugin": "^5.47.0",
+    "@typescript-eslint/parser": "^5.47.0",
+    "eslint": "^8.30.0",
+    "eslint-plugin-unicorn": "^45.0.2",
+    "nodemon": "^2.0.20",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.4"
+  },
+  "nodemonConfig": {
+    "delay": "750"
+  },
+  "tmpl-followup": {
+    "name": 12
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.25.16",
+    "ajv": "^8.11.2",
+    "ajv-formats": "^2.1.1"
+  }
+}
