@@ -1,0 +1,87 @@
+import { join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+
+import { diffLines } from 'diff';
+
+import { Context } from '../@types/Context';
+
+export type FileDiffItem = {
+    filename: string,
+    missing: boolean,
+    changes: number,
+    added: number,
+    removed: number,
+}
+
+export class FileDiff {
+    private context: Context;
+    private filenames: string[];
+
+    private diffs: FileDiffItem[] = [];
+
+    constructor(context: Context, filenames: string[]) {
+        this.context = context;
+        this.filenames = filenames;
+
+        for (const file of this.filenames)
+            this.diffs.push(this.getWorkingFileDiff(file))
+
+        this.maintain();
+    }
+
+    public count(): number { return this.diffs.length; }
+
+    public getAll(): FileDiffItem[] { return this.diffs; }
+
+    public getByFilename(filename: string): FileDiffItem | undefined { return this.diffs.find(d => d.filename === filename); }
+
+    public updateFile(filename: string) {
+        if (!this.filenames.includes(filename))
+            return;
+
+        this.diffs = this.diffs.filter(d => d.filename !== filename);
+        this.diffs.push(this.getWorkingFileDiff(filename));
+
+        this.maintain();
+    }
+
+    private maintain() {
+        if (this.diffs.length === 0)
+            return;
+        this.diffs = this.diffs.filter(d => d.missing || d.removed > 0);
+        this.diffs.sort((a, b) => a.filename.localeCompare(b.filename));
+    }
+
+    private getWorkingFileDiff(filename: string): FileDiffItem {
+        const workingFilename = join(this.context.workingFolder, filename);
+        if (existsSync(workingFilename)) {
+            const tmplFilename = join(this.context.templateFolder, filename);
+
+            let tmplFile = readFileSync(tmplFilename).toString();
+            const workingFile = readFileSync(workingFilename).toString();
+
+            if (this.context.config.templateId && this.context.config.repoId)
+                while (tmplFile.includes(this.context.config.templateId))
+                    tmplFile = tmplFile.replace(this.context.config.templateId, this.context.config.repoId);
+
+            const changes = diffLines(tmplFile, workingFile, {
+                ignoreWhitespace: true,
+                newlineIsToken: false
+            }).filter(c => c.added || c.removed);
+
+            return {
+                filename: filename,
+                changes: changes.length,
+                added: changes.filter(c => c.added).length,
+                removed: changes.filter(c => c.removed).length,
+                missing: false
+            }
+        }
+        else
+            return {
+                filename: filename,
+                missing: true,
+                changes: 0, added: 0, removed: 0
+            }
+    }
+}

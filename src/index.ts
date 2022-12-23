@@ -1,45 +1,60 @@
 import { getContext, getContextDisplay } from './libs/config';
-import { getWorkingFilesDiff } from './libs/fileDiff';
-import { getTemplateFiles } from './libs/files';
-const { Select } = require('enquirer');
+import { FileDiff } from './libs/FileDiff';
+import { copyFromTemplate, getTemplateFiles } from './libs/files';
+import { fileSelectToProcess, selectOperationExisting, selectOperationNew } from './libs/prompts';
+import { runDiffTool } from './libs/spawn';
 
 const start = async () => {
     try {
         console.log('[TMPL-FOLLOWUP] Follow template repo');
-        const context = getContext();
+        const context = await getContext();
         console.log(getContextDisplay(context) + '...');
 
         const files = getTemplateFiles(context);
         console.log(`${files.length} template files found`);
 
-        const diffState = getWorkingFilesDiff(context, files);
-        if (diffState.length > 0) {
-            console.log(`${diffState.length} diffs found`);
-
-            const diffStateToDisplay = diffState.map(ds => {
-                const infos = [];
-                if (ds.missing)
-                    infos.push('new');
-                else {
-                    if (ds.added)
-                        infos.push(`+${ds.added}`);
-                    if (ds.removed)
-                        infos.push(`-${ds.removed}`);
-                }
-                return `${ds.filename} (${infos.join('')})`;
-            });
-
-            const prompt = new Select({
-                name: 'file',
-                message: 'Select a file to process',
-                choices: diffStateToDisplay,
-            });
-
-            const answer = await prompt.run();
-            console.log('Answer:', answer);
-        }
-        else
+        const fileDiffs = new FileDiff(context, files);
+        if (fileDiffs.count() === 0)
             console.log('No diffs found, working folder is identical to template');
+
+        while (fileDiffs.count() > 0) {
+            console.log(`${fileDiffs.count()} diffs found`);
+
+            const selectedFile = await fileSelectToProcess(fileDiffs.getAll());
+            if (selectedFile) {
+                const diffState = fileDiffs.getByFilename(selectedFile);
+                if (diffState)
+                    if (diffState.missing) {
+                        const op = await selectOperationNew(selectedFile);
+                        switch (op) {
+                            case 'create': {
+                                try { copyFromTemplate(context, selectedFile); }
+                                catch (error) { console.error('Create error: ' + (error instanceof Error ? error.message : 'unknown')); }
+                                break;
+                            }
+                            case 'hide': {
+                                break;
+                            }
+                        }
+                        fileDiffs.updateFile(selectedFile);
+                    }
+                    else {
+                        const op = await selectOperationExisting(selectedFile);
+                        switch (op) {
+                            case 'diff': {
+                                runDiffTool(context, selectedFile);
+                                break;
+                            }
+                            case 'hide': {
+                                break;
+                            }
+                        }
+                        fileDiffs.updateFile(selectedFile);
+                    }
+            }
+            else
+                break;
+        }
     }
     catch (error) { console.error('Error: ' + (error instanceof Error ? error.message : 'unknown')); }
 }

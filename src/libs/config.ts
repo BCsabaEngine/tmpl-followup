@@ -7,13 +7,15 @@ import { validateObject } from './ajv';
 import { Config, TemplateConfig } from '../@types/Config';
 import { Context } from '../@types/Context';
 import { commonFolderPrefix } from './commonSubstring';
+import { commandLine } from './commandLine';
 
 const CONFIG_NAME = 'tmpl-followup';
 const CONFIG_FILE = `${CONFIG_NAME}.json`;
 
-const getWorkingFolder = (): string => {
-    const argument = process.argv.slice(2);
-    let projectDirectory = (argument.length > 0 ? argument[0] : '.') || '';
+const getWorkingFolder = async (): Promise<string> => {
+    const cmdLine = await commandLine();
+
+    let projectDirectory = cmdLine.folder;
     if (!isAbsolute(projectDirectory))
         projectDirectory = join(process.cwd(), projectDirectory);
 
@@ -43,8 +45,8 @@ const getConfig = (projectDirectory: string): Config => {
     throw new Error(`Project folder ${projectDirectory} does not contain configuration (${CONFIG_FILE})`);
 }
 
-export const getContext = (): Context => {
-    const workingFolder = getWorkingFolder();
+export const getContext = async (): Promise<Context> => {
+    const workingFolder = await getWorkingFolder();
     const config: Config = getConfig(workingFolder);
     const templateFolder = join(workingFolder, config.templateFolder);
 

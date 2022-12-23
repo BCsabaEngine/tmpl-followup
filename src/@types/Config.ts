@@ -3,6 +3,7 @@ import { Static, Type } from '@sinclair/typebox';
 export const Config = Type.Object({
     templateFolder: Type.String(),
     templateId: Type.Optional(Type.String()),
+    repoId: Type.Optional(Type.String()),
     exclude: Type.Array(Type.String(), { default: [] }),
 });
 

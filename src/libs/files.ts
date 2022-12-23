@@ -1,3 +1,6 @@
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+
 import { sync as globsync } from 'glob';
 
 import { Context } from '../@types/Context';
@@ -13,4 +16,13 @@ export const getTemplateFiles = (context: Context): string[] => {
     files.sort();
 
     return files;
+}
+
+export const copyFromTemplate = (context: Context, filename: string) => {
+    const content = readFileSync(join(context.templateFolder, filename));
+
+    const workingFileName = join(context.workingFolder, filename);
+    const workingFolder = dirname(workingFileName);
+    mkdirSync(workingFolder, { recursive: true });
+    writeFileSync(workingFileName, content);
 }
