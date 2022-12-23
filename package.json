@@ -7,12 +7,14 @@
     "dev": "nodemon src/index.ts",
     "clean": "tsc --build --clean && rimraf ./build",
     "build": "npm run clean && tsc --build --force",
+    "build:check": "tsc --build --force && npm run clean",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/glob": "^8.0.0",
     "@types/node": "^18.11.17",
     "@typescript-eslint/eslint-plugin": "^5.47.0",
     "@typescript-eslint/parser": "^5.47.0",
@@ -25,12 +27,10 @@
   "nodemonConfig": {
     "delay": "750"
   },
-  "tmpl-followup": {
-    "name": 12
-  },
   "dependencies": {
     "@sinclair/typebox": "^0.25.16",
     "ajv": "^8.11.2",
-    "ajv-formats": "^2.1.1"
+    "ajv-formats": "^2.1.1",
+    "glob": "^8.0.3"
   }
 }

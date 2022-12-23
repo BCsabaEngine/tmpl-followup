@@ -1,4 +1,3 @@
-import { TSchema } from '@sinclair/typebox';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 
@@ -14,7 +13,7 @@ const ajv = new Ajv({
 addFormats(ajv);
 
 export const validateObject = <T>(
-  schema: TSchema,
+  schema: Record<string, any>,
   object: unknown,
 ): T => {
   const isValid = ajv.validate(schema, object);

@@ -1,8 +1,16 @@
-import { Static, TSchema, Type } from '@sinclair/typebox';
+import { Static, Type } from '@sinclair/typebox';
 
-export const Config: TSchema = Type.Object({
-    name: Type.String(),
-    id: Type.Optional(Type.String()),
+export const Config = Type.Object({
+    templateFolder: Type.String(),
+    templateId: Type.Optional(Type.String()),
+    exclude: Type.Optional(Type.Array(Type.String())),
 });
 
 export type Config = Static<typeof Config>;
+
+export const TemplateConfig = Type.Object({
+    templateId: Type.Optional(Type.String()),
+    exclude: Type.Optional(Type.Array(Type.String())),
+});
+
+export type TemplateConfig = Static<typeof TemplateConfig>;
