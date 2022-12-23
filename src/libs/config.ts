@@ -6,6 +6,7 @@ import { validateObject } from './ajv';
 
 import { Config, TemplateConfig } from '../@types/Config';
 import { Context } from '../@types/Context';
+import { commonFolderPrefix } from './commonSubstring';
 
 const CONFIG_NAME = 'tmpl-followup';
 const CONFIG_FILE = `${CONFIG_NAME}.json`;
@@ -39,19 +40,7 @@ const getConfig = (projectDirectory: string): Config => {
         }
     }
 
-    const packageFile = join(projectDirectory, 'package.json');
-    if (existsSync(packageFile)) {
-        try {
-            const fileData = readFileSync(packageFile);
-            const fileDataObject = JSON.parse(fileData.toString());
-            if (fileDataObject[CONFIG_NAME])
-                return validateObject<Config>(Config, fileDataObject[CONFIG_NAME]);
-        } catch (error) {
-            throw new Error(`Cannot parse config from file ${packageFile}: ${error instanceof Error ? error.message : 'unknown'}`);
-        }
-    }
-
-    throw new Error(`Project folder ${projectDirectory} does not contain configuration (${CONFIG_FILE} or package.json/${CONFIG_NAME})`);
+    throw new Error(`Project folder ${projectDirectory} does not contain configuration (${CONFIG_FILE})`);
 }
 
 export const getContext = (): Context => {
@@ -76,25 +65,10 @@ export const getContext = (): Context => {
         }
     }
 
-    if (!templateconfig) {
-        const packageFile = join(templateFolder, 'package.json');
-        if (existsSync(packageFile)) {
-            try {
-                const fileData = readFileSync(packageFile);
-                const fileDataObject = JSON.parse(fileData.toString());
-                if (fileDataObject[CONFIG_NAME])
-                    templateconfig = validateObject<TemplateConfig>(TemplateConfig, fileDataObject[CONFIG_NAME]);
-            } catch (error) {
-                throw new Error(`Cannot parse config from file ${packageFile}: ${error instanceof Error ? error.message : 'unknown'}`);
-            }
-        }
-    }
     if (templateconfig) {
         config.templateId ||= templateconfig.templateId;
-        if (templateconfig.exclude && templateconfig.exclude.length > 0) {
-            config.exclude = config.exclude || [];
+        if (templateconfig.exclude && templateconfig.exclude.length > 0)
             config.exclude.push(...templateconfig.exclude);
-        }
     }
 
     const gitignoreFile = join(templateFolder, '.gitignore');
@@ -102,18 +76,20 @@ export const getContext = (): Context => {
         try {
             const fileData = readFileSync(gitignoreFile);
             const fileDataLines = fileData.toString().split(EOL).map(l => l.trim()).filter(Boolean).filter(l => !l.startsWith('#'));
-            if (fileDataLines.length > 0) {
-                config.exclude = config.exclude || [];
+            if (fileDataLines.length > 0)
                 config.exclude.push(...fileDataLines);
-            }
         } catch (error) {
             throw new Error(`Cannot parse ignores from file ${gitignoreFile}: ${error instanceof Error ? error.message : 'unknown'}`);
         }
     }
 
-    config.exclude = config.exclude || [];
     config.exclude.push(CONFIG_FILE);
 
-
     return { config, workingFolder, templateFolder }
+}
+
+export const getContextDisplay = (context: Context): string => {
+    const folderPrefix = commonFolderPrefix([context.templateFolder, context.workingFolder]);
+
+    return `Compare ${context.templateFolder.replace(folderPrefix, `[${folderPrefix}] `)} -> ${context.workingFolder.replace(folderPrefix, '')}`;
 }

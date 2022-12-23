@@ -23,7 +23,7 @@
     "noFallthroughCasesInSwitch": true,
     "noPropertyAccessFromIndexSignature": true,
     "noUncheckedIndexedAccess": true,
-    "esModuleInterop": true,
+    "esModuleInterop": true, 
     "resolveJsonModule": false,
     "forceConsistentCasingInFileNames": true,
     "extendedDiagnostics": true,

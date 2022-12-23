@@ -1,4 +1,4 @@
-export const ignore = (masks: string[], files: string[]) => {
+export const ignoreFile = (masks: string[], files: string[]) => {
     return files.filter(f => {
         for (const mask of masks)
             if (f.includes(mask))

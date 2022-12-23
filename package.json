@@ -1,7 +1,7 @@
 {
   "name": "tmpl-followup",
   "version": "1.0.0",
-  "description": "",
+  "description": "Follow up your template repo, adopt changes",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
@@ -14,7 +14,9 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/diff": "^5.0.2",
     "@types/glob": "^8.0.0",
+    "@types/inquirer": "^9.0.3",
     "@types/node": "^18.11.17",
     "@typescript-eslint/eslint-plugin": "^5.47.0",
     "@typescript-eslint/parser": "^5.47.0",
@@ -31,6 +33,8 @@
     "@sinclair/typebox": "^0.25.16",
     "ajv": "^8.11.2",
     "ajv-formats": "^2.1.1",
+    "diff": "^5.1.0",
+    "enquirer": "^2.3.6",
     "glob": "^8.0.3"
   }
 }

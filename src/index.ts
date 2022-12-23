@@ -1,26 +1,47 @@
-import { sync as globsync } from 'glob';
+import { getContext, getContextDisplay } from './libs/config';
+import { getWorkingFilesDiff } from './libs/fileDiff';
+import { getTemplateFiles } from './libs/files';
+const { Select } = require('enquirer');
 
-import { commonFolderPrefix } from './libs/commonSubstring';
-import { getContext } from './libs/config';
-import { ignore } from './libs/ignore';
+const start = async () => {
+    try {
+        console.log('[TMPL-FOLLOWUP] Follow template repo');
+        const context = getContext();
+        console.log(getContextDisplay(context) + '...');
 
-try {
-    const context = getContext();
-    {
-        const folderPrefix = commonFolderPrefix([context.templateFolder, context.workingFolder]);
-        console.log(`Compare ${context.templateFolder.replace(folderPrefix, `[${folderPrefix}]`)} -> ${context.workingFolder.replace(folderPrefix, '')}`);
+        const files = getTemplateFiles(context);
+        console.log(`${files.length} template files found`);
+
+        const diffState = getWorkingFilesDiff(context, files);
+        if (diffState.length > 0) {
+            console.log(`${diffState.length} diffs found`);
+
+            const diffStateToDisplay = diffState.map(ds => {
+                const infos = [];
+                if (ds.missing)
+                    infos.push('new');
+                else {
+                    if (ds.added)
+                        infos.push(`+${ds.added}`);
+                    if (ds.removed)
+                        infos.push(`-${ds.removed}`);
+                }
+                return `${ds.filename} (${infos.join('')})`;
+            });
+
+            const prompt = new Select({
+                name: 'file',
+                message: 'Select a file to process',
+                choices: diffStateToDisplay,
+            });
+
+            const answer = await prompt.run();
+            console.log('Answer:', answer);
+        }
+        else
+            console.log('No diffs found, working folder is identical to template');
     }
-
-    const files = globsync('**', {
-        cwd: context.templateFolder,
-        nodir: true,
-        nosort: true
-    });
-    const files2 = ignore(context.config.exclude || [], files)
-    files2.sort();
-    console.log(files2);
-    console.log(files2.length);
-
-
+    catch (error) { console.error('Error: ' + (error instanceof Error ? error.message : 'unknown')); }
 }
-catch (error) { console.error(error instanceof Error ? error.message : error); }
+
+void start();
