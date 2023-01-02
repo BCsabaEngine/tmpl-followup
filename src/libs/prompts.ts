@@ -5,6 +5,19 @@ const { Select } = require('enquirer');
 
 const SEP = '…';
 
+let promptFileSelect: typeof Select;
+let promptOperationNew: typeof Select;
+let promptOperationExisting: typeof Select;
+
+export const cancel = (): void => {
+    if (promptFileSelect)
+        promptFileSelect.cancel();
+    if (promptOperationNew)
+        promptOperationNew.cancel();
+    if (promptOperationExisting)
+        promptOperationExisting.cancel();
+}
+
 export const fileSelectToProcess = async (fileDiffs: FileDiffItem[]): Promise<string | undefined> => {
     const diffStateToDisplay = fileDiffs.map(fd => {
         const infos = [];
@@ -19,14 +32,14 @@ export const fileSelectToProcess = async (fileDiffs: FileDiffItem[]): Promise<st
         return `${fd.filename}${SEP} (${infos.join('')})`;
     }).sort();
 
-    const prompt = new Select({
+    promptFileSelect = new Select({
         name: 'file',
         message: 'Select a file to process',
         choices: diffStateToDisplay,
     });
 
     try {
-        const answer = await prompt.run() as string;
+        const answer = await promptFileSelect.run() as string;
         if (answer && answer.includes(SEP)) {
             const parts = answer.split(SEP);
             if (parts.length > 0)
@@ -35,6 +48,7 @@ export const fileSelectToProcess = async (fileDiffs: FileDiffItem[]): Promise<st
         return;
     }
     catch { return }
+    finally { promptFileSelect = undefined; }
 }
 
 export type OperationNew = 'create' | 'hide' | 'cancel';
@@ -42,14 +56,14 @@ export const selectOperationNew = async (filename: string): Promise<OperationNew
     const CREATE = 'Create file from template';
     const HIDE = 'Hide this version';
 
-    const prompt = new Select({
+    promptOperationNew = new Select({
         name: 'select',
         message: `Select operation for ${filename}`,
         choices: [CREATE, HIDE, 'Cancel'],
     });
 
     try {
-        const answer = await prompt.run() as string;
+        const answer = await promptOperationNew.run() as string;
         if (answer)
             switch (answer) {
                 case CREATE: {
@@ -62,6 +76,7 @@ export const selectOperationNew = async (filename: string): Promise<OperationNew
         return 'cancel';
     }
     catch { return 'cancel'; }
+    finally { promptOperationNew = undefined; }
 }
 
 export type OperationExisting = 'diff' | 'hide' | 'cancel';
@@ -69,14 +84,14 @@ export const selectOperationExisting = async (filename: string): Promise<Operati
     const DIFF = 'Open in diff editor';
     const HIDE = 'Hide this version';
 
-    const prompt = new Select({
+    promptOperationExisting = new Select({
         name: 'select',
         message: `Select operation for ${filename}`,
         choices: [DIFF, HIDE, 'Cancel'],
     });
 
     try {
-        const answer = await prompt.run() as string;
+        const answer = await promptOperationExisting.run() as string;
         if (answer)
             switch (answer) {
                 case DIFF: {
@@ -89,4 +104,5 @@ export const selectOperationExisting = async (filename: string): Promise<Operati
         return 'cancel';
     }
     catch { return 'cancel'; }
+    finally { promptOperationExisting = undefined; }
 }

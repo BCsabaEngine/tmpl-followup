@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { diffLines } from 'diff';
 
 import { Context } from '../@types/Context';
+import { getTemplateFileHash } from './files';
 
 export type FileDiffItem = {
     filename: string,
@@ -58,6 +59,17 @@ export class FileDiff {
             const tmplFilename = join(this.context.templateFolder, filename);
 
             let tmplFile = readFileSync(tmplFilename).toString();
+            if (!this.context.commandLine.hidden) {
+                const hfItem = this.context.config.hiddenFiles.find(hf => hf.filename === filename);
+                if (hfItem && hfItem.hash === getTemplateFileHash(this.context.templateFolder, filename))
+                    return {
+                        filename,
+                        added: 0,
+                        removed: 0,
+                        changes: 0,
+                        missing: false,
+                    }
+            }
             const workingFile = readFileSync(workingFilename).toString();
 
             if (this.context.config.templateId && this.context.config.repoId)
@@ -77,11 +89,23 @@ export class FileDiff {
                 missing: false
             }
         }
-        else
+        else {
+            if (!this.context.commandLine.hidden) {
+                const hfItem = this.context.config.hiddenFiles.find(hf => hf.filename === filename);
+                if (hfItem && hfItem.hash === getTemplateFileHash(this.context.templateFolder, filename))
+                    return {
+                        filename,
+                        added: 0,
+                        removed: 0,
+                        changes: 0,
+                        missing: false,
+                    }
+            }
             return {
                 filename: filename,
                 missing: true,
                 changes: 0, added: 0, removed: 0
             }
+        }
     }
 }

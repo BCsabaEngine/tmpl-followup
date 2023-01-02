@@ -5,6 +5,12 @@ export const Config = Type.Object({
     templateId: Type.Optional(Type.String()),
     repoId: Type.Optional(Type.String()),
     exclude: Type.Array(Type.String(), { default: [] }),
+    diffTool: Type.Optional(Type.String()),
+    hiddenFiles: Type.Array(Type.Object({
+        filename: Type.String(),
+        hash: Type.String(),
+    }), { default: [] }),
+
 });
 
 export type Config = Static<typeof Config>;

@@ -1,4 +1,2 @@
 Display GIT repo
 repoId & templateId from package.json
-Reload diff state when file changed
-Hide Op

@@ -1,11 +1,14 @@
 import { getContext, getContextDisplay } from './libs/config';
 import { FileDiff } from './libs/FileDiff';
 import { copyFromTemplate, getTemplateFiles } from './libs/files';
+import { removeAll as removeAllFileWatch, watch as watchFile } from './libs/fileWatch';
 import { fileSelectToProcess, selectOperationExisting, selectOperationNew } from './libs/prompts';
+import { getReason, reload } from './libs/reloader';
 import { runDiffTool } from './libs/spawn';
 
 const start = async () => {
     try {
+        console.clear();
         console.log('[TMPL-FOLLOWUP] Follow template repo');
         const context = await getContext();
         console.log(getContextDisplay(context) + '...');
@@ -18,6 +21,10 @@ const start = async () => {
             console.log('No diffs found, working folder is identical to template');
 
         while (fileDiffs.count() > 0) {
+            const reloadReason = getReason(true);
+            if (reloadReason)
+                console.log(`Reloaded because ${reloadReason}`);
+
             console.log(`${fileDiffs.count()} diffs found`);
 
             const selectedFile = await fileSelectToProcess(fileDiffs.getAll());
@@ -33,6 +40,7 @@ const start = async () => {
                                 break;
                             }
                             case 'hide': {
+                                context.addHiddenFile(selectedFile);
                                 break;
                             }
                         }
@@ -43,20 +51,29 @@ const start = async () => {
                         switch (op) {
                             case 'diff': {
                                 runDiffTool(context, selectedFile);
+                                watchFile(context, selectedFile, () => {
+                                    fileDiffs.updateFile(selectedFile);
+                                    reload(`${selectedFile} changed`);
+                                });
                                 break;
                             }
                             case 'hide': {
+                                context.addHiddenFile(selectedFile);
                                 break;
                             }
                         }
                         fileDiffs.updateFile(selectedFile);
                     }
             }
-            else
+            else if (!getReason())
                 break;
+
+            console.clear();
         }
     }
     catch (error) { console.error('Error: ' + (error instanceof Error ? error.message : 'unknown')); }
+
+    removeAllFileWatch();
 }
 
 void start();

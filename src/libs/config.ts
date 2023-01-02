@@ -1,6 +1,6 @@
 import { isAbsolute, join } from 'node:path';
 import { EOL } from 'node:os';
-import { existsSync, lstatSync, readFileSync } from 'node:fs';
+import { existsSync, lstatSync, readFileSync, writeFileSync } from 'node:fs';
 
 import { validateObject } from './ajv';
 
@@ -8,6 +8,7 @@ import { Config, TemplateConfig } from '../@types/Config';
 import { Context } from '../@types/Context';
 import { commonFolderPrefix } from './commonSubstring';
 import { commandLine } from './commandLine';
+import { getTemplateFileHash } from './files';
 
 const CONFIG_NAME = 'tmpl-followup';
 const CONFIG_FILE = `${CONFIG_NAME}.json`;
@@ -43,6 +44,22 @@ const getConfig = (projectDirectory: string): Config => {
     }
 
     throw new Error(`Project folder ${projectDirectory} does not contain configuration (${CONFIG_FILE})`);
+}
+
+const updateConfig = (projectDirectory: string, config: Config): void => {
+    const configFile = join(projectDirectory, CONFIG_FILE);
+    if (existsSync(configFile)) {
+        try {
+            const fileData = readFileSync(configFile).toString();
+            if (!fileData)
+                throw new Error('Empty file');
+            const fileDataObject = validateObject<Config>(Config, JSON.parse(fileData));
+            fileDataObject.hiddenFiles = config.hiddenFiles;
+            writeFileSync(configFile, JSON.stringify(fileDataObject, undefined, 2));
+        } catch (error) {
+            throw new Error(`Cannot update config in file ${configFile}: ${error instanceof Error ? error.message : 'unknown'}`);
+        }
+    }
 }
 
 export const getContext = async (): Promise<Context> => {
@@ -87,7 +104,15 @@ export const getContext = async (): Promise<Context> => {
 
     config.exclude.push(CONFIG_FILE);
 
-    return { config, workingFolder, templateFolder }
+    return {
+        config, workingFolder, templateFolder,
+        addHiddenFile: (filename: string) => {
+            config.hiddenFiles = config.hiddenFiles.filter(f => f.filename !== filename);
+            config.hiddenFiles.push({ filename: filename, hash: getTemplateFileHash(templateFolder, filename) });
+            updateConfig(workingFolder, config);
+        },
+        commandLine: await commandLine(),
+    }
 }
 
 export const getContextDisplay = (context: Context): string => {

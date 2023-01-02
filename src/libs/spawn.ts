@@ -7,5 +7,8 @@ export const runDiffTool = (context: Context, filename: string) => {
     const templateFile = join(context.templateFolder, filename);
     const workingFile = join(context.workingFolder, filename);
 
-    execSync(`code -d -n ${templateFile} ${workingFile}`);
+    const diffTool = context.config.diffTool?.replace('$1', templateFile).replace('$2', workingFile);
+    if (!diffTool)
+        throw new Error('Diff tool not configured');
+    execSync(diffTool);
 }

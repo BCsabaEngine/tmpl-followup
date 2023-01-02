@@ -10,7 +10,6 @@ export const commandLine = async () => {
             default: '.',
         })
         .option('hidden', {
-            alias: 'h',
             description: 'Show hidden files',
             boolean: true,
             default: false,
