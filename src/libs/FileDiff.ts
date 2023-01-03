@@ -74,9 +74,7 @@ export class FileDiff {
             }
             const workingFile = readFileSync(workingFilename).toString();
 
-            if (this.context.config.templateId && this.context.config.repoId)
-                while (tmplFile.includes(this.context.config.templateId))
-                    tmplFile = tmplFile.replace(this.context.config.templateId, this.context.config.repoId);
+            tmplFile = this.context.getWorkingContent(tmplFile);
 
             const changes = diffLines(tmplFile, workingFile, {
                 ignoreWhitespace: true,

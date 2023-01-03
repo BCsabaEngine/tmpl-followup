@@ -11,6 +11,7 @@ import { commandLine } from './commandLine';
 import { getTemplateFileHash } from './files';
 import { checkGitBranch } from './git';
 import { getRcFileName, userRcCheckOrCreate } from './rc';
+import { getSeparatorVariations } from './separatorVariations';
 
 const CONFIG_NAME = 'tmpl-followup';
 const CONFIG_FILE = `${CONFIG_NAME}.json`;
@@ -137,6 +138,7 @@ export const getContext = async (): Promise<Context> => {
 
     config.exclude.push(CONFIG_FILE);
 
+
     return {
         config, workingFolder, templateFolder,
         diffTool,
@@ -152,9 +154,17 @@ export const getContext = async (): Promise<Context> => {
         commandLine: await commandLine(),
         getWorkingFilename: (filename: string): string => {
             if (config.templateId && config.repoId)
-                while (filename.includes(config.templateId))
-                    filename = filename.replace(config.templateId, config.repoId);
+                for (const [templateId, repoId] of getSeparatorVariations(config.templateId, config.repoId, [...'-_.']))
+                    while (filename.includes(templateId))
+                        filename = filename.replace(templateId, repoId);
             return filename;
+        },
+        getWorkingContent: (content: string): string => {
+            if (config.templateId && config.repoId)
+                for (const [templateId, repoId] of getSeparatorVariations(config.templateId, config.repoId, [...'-_.']))
+                    while (content.includes(templateId))
+                        content = content.replace(templateId, repoId);
+            return content;
         },
     }
 }

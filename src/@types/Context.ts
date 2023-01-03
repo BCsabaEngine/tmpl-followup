@@ -15,4 +15,5 @@ export type Context = {
         hidden: boolean,
     },
     getWorkingFilename: (filename: string) => string,
+    getWorkingContent: (content: string) => string,
 }
