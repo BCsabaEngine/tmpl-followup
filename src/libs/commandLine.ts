@@ -14,7 +14,7 @@ export const commandLine = async () => {
             boolean: true,
             default: false,
         })
-        .version('version')
-        .help('help', 'Show this help')
+        .version('v', 'Version number', '0.1.2')
+        .help('h', 'Show this help')
         .argv;
 }
