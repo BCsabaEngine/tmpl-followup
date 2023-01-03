@@ -5,14 +5,15 @@ import { removeAll as removeAllFileWatch, watch as watchFile } from './libs/file
 import { fileSelectToProcess, selectOperationExisting, selectOperationNew } from './libs/prompts';
 import { getReason, reload } from './libs/reloader';
 import { runDiffTool } from './libs/spawn';
+import { appVersion } from './version';
 
 const start = async () => {
     try {
         console.clear();
-        console.log('[TMPL-FOLLOWUP] Follow template repo');
+        console.log(`[TMPL-FOLLOWUP] Follow template repo - ${appVersion}`);
         const context = await getContext();
         console.log(getContextDisplay(context) + '...');
-        
+
         const files = getTemplateFiles(context);
         console.log(`${files.length} template files found`);
 
@@ -72,8 +73,7 @@ const start = async () => {
         }
     }
     catch (error) { console.error('Error: ' + (error instanceof Error ? error.message : 'unknown')); }
-
-    removeAllFileWatch();
+    finally { removeAllFileWatch(); }
 }
 
 void start();

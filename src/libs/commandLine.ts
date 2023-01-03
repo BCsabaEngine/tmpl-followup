@@ -1,6 +1,8 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
+import { appVersion } from '../version';
+
 export const commandLine = async () => {
     return yargs(hideBin(process.argv))
         .option('folder', {
@@ -14,7 +16,7 @@ export const commandLine = async () => {
             boolean: true,
             default: false,
         })
-        .version('v', 'Version number', '0.1.2')
+        .version('v', 'Version number', appVersion)
         .help('h', 'Show this help')
         .argv;
 }
