@@ -6,7 +6,7 @@ const watches: Map<string, StatWatcher> = new Map<string, StatWatcher>();
 
 export type WatchEvent = () => void;
 export const watch = (context: Context, file: string, callback: WatchEvent) => {
-    const filename = join(context.workingFolder, sep, file);
+    const filename = join(context.workingFolder, sep, context.getWorkingFilename(file));
     if (watches.has(filename))
         return;
 

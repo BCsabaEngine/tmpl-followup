@@ -9,6 +9,8 @@ import { Context } from '../@types/Context';
 import { commonFolderPrefix } from './commonSubstring';
 import { commandLine } from './commandLine';
 import { getTemplateFileHash } from './files';
+import { checkGitBranch } from './git';
+import { getRcFileName, userRcCheckOrCreate } from './rc';
 
 const CONFIG_NAME = 'tmpl-followup';
 const CONFIG_FILE = `${CONFIG_NAME}.json`;
@@ -62,7 +64,13 @@ const updateConfig = (projectDirectory: string, config: Config): void => {
     }
 }
 
+
 export const getContext = async (): Promise<Context> => {
+
+    const diffTool = await userRcCheckOrCreate();
+    if (!diffTool)
+        throw new Error(`Diff tool not configured in ${getRcFileName()}`);
+
     const workingFolder = await getWorkingFolder();
     const config: Config = getConfig(workingFolder);
     const templateFolder = join(workingFolder, config.templateFolder);
@@ -90,6 +98,31 @@ export const getContext = async (): Promise<Context> => {
             config.exclude.push(...templateconfig.exclude);
     }
 
+    if (config.templateId === undefined) {
+        const tmplPackageJson = join(templateFolder, 'package.json');
+        if (existsSync(tmplPackageJson)) {
+            try {
+                const fileData = readFileSync(tmplPackageJson).toString();
+                const fileObject = JSON.parse(fileData);
+                const name = fileObject.name;
+                if (name)
+                    config.templateId = name;
+            } catch (error) { console.log(`Cannot parse file ${tmplPackageJson} for name: ${error instanceof Error ? error.message : 'unknown'}`) }
+        }
+    }
+    if (config.repoId === undefined) {
+        const workPackageJson = join(workingFolder, 'package.json');
+        if (existsSync(workPackageJson)) {
+            try {
+                const fileData = readFileSync(workPackageJson).toString();
+                const fileObject = JSON.parse(fileData);
+                const name = fileObject.name;
+                if (name)
+                    config.repoId = name;
+            } catch (error) { console.log(`Cannot parse file ${workPackageJson} for name: ${error instanceof Error ? error.message : 'unknown'}`) }
+        }
+    }
+
     const gitignoreFile = join(templateFolder, '.gitignore');
     if (existsSync(gitignoreFile)) {
         try {
@@ -106,17 +139,36 @@ export const getContext = async (): Promise<Context> => {
 
     return {
         config, workingFolder, templateFolder,
-        addHiddenFile: (filename: string) => {
+        diffTool,
+        git: {
+            working: checkGitBranch(workingFolder),
+            template: checkGitBranch(templateFolder),
+        },
+        addHiddenFile: (filename: string): void => {
             config.hiddenFiles = config.hiddenFiles.filter(f => f.filename !== filename);
             config.hiddenFiles.push({ filename: filename, hash: getTemplateFileHash(templateFolder, filename) });
             updateConfig(workingFolder, config);
         },
         commandLine: await commandLine(),
+        getWorkingFilename: (filename: string): string => {
+            if (config.templateId && config.repoId)
+                while (filename.includes(config.templateId))
+                    filename = filename.replace(config.templateId, config.repoId);
+            return filename;
+        },
     }
 }
 
 export const getContextDisplay = (context: Context): string => {
     const folderPrefix = commonFolderPrefix([context.templateFolder, context.workingFolder]);
 
-    return `Compare ${context.templateFolder.replace(folderPrefix, `[${folderPrefix}] `)} -> ${context.workingFolder.replace(folderPrefix, '')}`;
+    let templateFolder = context.templateFolder.replace(folderPrefix, '');
+    if (context.git.template)
+        templateFolder += ` (${context.git.template})`;
+
+    let workingFolder = context.workingFolder.replace(folderPrefix, '');
+    if (context.git.working)
+        workingFolder += ` (${context.git.working})`;
+
+    return `Compare in common folder ${folderPrefix}\n${templateFolder} -> ${workingFolder}`;
 }

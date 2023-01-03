@@ -1,2 +1,1 @@
-Display GIT repo
-repoId & templateId from package.json
+rename new files if needed

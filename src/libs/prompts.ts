@@ -1,7 +1,7 @@
 import { FileDiffItem } from './FileDiff';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, unicorn/prefer-module
-const { Select } = require('enquirer');
+const { Select, Confirm } = require('enquirer');
 
 const SEP = '…';
 
@@ -29,7 +29,9 @@ export const fileSelectToProcess = async (fileDiffs: FileDiffItem[]): Promise<st
             if (fd.removed)
                 infos.push(`-${fd.removed}`);
         }
-        return `${fd.filename}${SEP} (${infos.join('')})`;
+        if (fd.hidden)
+            infos.push('h');
+        return `${fd.filename}${SEP} (${infos.join(',')})`;
     }).sort();
 
     promptFileSelect = new Select({
@@ -105,4 +107,14 @@ export const selectOperationExisting = async (filename: string): Promise<Operati
     }
     catch { return 'cancel'; }
     finally { promptOperationExisting = undefined; }
+}
+
+export const selectCreateRcFile = async (filename: string): Promise<boolean> => {
+    const prompt = new Confirm({
+        message: `Create a ${filename} file?`,
+        name: 'question',
+    });
+
+    try { return await prompt.run() as boolean; }
+    catch { return false; }
 }

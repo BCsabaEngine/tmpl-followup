@@ -37,9 +37,12 @@ export const getTemplateFiles = (context: Context): string[] => {
 }
 
 export const copyFromTemplate = (context: Context, filename: string) => {
-    const content = readFileSync(join(context.templateFolder, filename));
+    let content = readFileSync(join(context.templateFolder, filename)).toString();
+    if (context.config.templateId && context.config.repoId)
+        while (content.includes(context.config.templateId))
+            content = content.replace(context.config.templateId, context.config.repoId);
 
-    const workingFileName = join(context.workingFolder, filename);
+    const workingFileName = join(context.workingFolder, context.getWorkingFilename(filename));
     const workingFolder = dirname(workingFileName);
     mkdirSync(workingFolder, { recursive: true });
     writeFileSync(workingFileName, content);

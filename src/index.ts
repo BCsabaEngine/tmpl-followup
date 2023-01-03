@@ -12,7 +12,7 @@ const start = async () => {
         console.log('[TMPL-FOLLOWUP] Follow template repo');
         const context = await getContext();
         console.log(getContextDisplay(context) + '...');
-
+        
         const files = getTemplateFiles(context);
         console.log(`${files.length} template files found`);
 

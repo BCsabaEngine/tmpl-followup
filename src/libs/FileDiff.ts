@@ -9,6 +9,7 @@ import { getTemplateFileHash } from './files';
 export type FileDiffItem = {
     filename: string,
     missing: boolean,
+    hidden: boolean,
     changes: number,
     added: number,
     removed: number,
@@ -54,7 +55,7 @@ export class FileDiff {
     }
 
     private getWorkingFileDiff(filename: string): FileDiffItem {
-        const workingFilename = join(this.context.workingFolder, filename);
+        const workingFilename = join(this.context.workingFolder, this.context.getWorkingFilename(filename));
         if (existsSync(workingFilename)) {
             const tmplFilename = join(this.context.templateFolder, filename);
 
@@ -64,10 +65,11 @@ export class FileDiff {
                 if (hfItem && hfItem.hash === getTemplateFileHash(this.context.templateFolder, filename))
                     return {
                         filename,
+                        missing: false,
+                        hidden: false,
                         added: 0,
                         removed: 0,
                         changes: 0,
-                        missing: false,
                     }
             }
             const workingFile = readFileSync(workingFilename).toString();
@@ -83,10 +85,11 @@ export class FileDiff {
 
             return {
                 filename: filename,
+                missing: false,
+                hidden: this.context.config.hiddenFiles.some(hf => hf.filename === filename),
                 changes: changes.length,
                 added: changes.filter(c => c.added).length,
                 removed: changes.filter(c => c.removed).length,
-                missing: false
             }
         }
         else {
@@ -95,15 +98,17 @@ export class FileDiff {
                 if (hfItem && hfItem.hash === getTemplateFileHash(this.context.templateFolder, filename))
                     return {
                         filename,
+                        missing: false,
+                        hidden: false,
                         added: 0,
                         removed: 0,
                         changes: 0,
-                        missing: false,
                     }
             }
             return {
                 filename: filename,
                 missing: true,
+                hidden: this.context.config.hiddenFiles.some(hf => hf.filename === filename),
                 changes: 0, added: 0, removed: 0
             }
         }
