@@ -6,8 +6,6 @@ When you create a new repo from a github template repo, you lose the connection 
 ## How
 You can easily link the two repos on your machine. After that, tmpl-followup shows you the differences that you can transfer in **one direction**: you can move the differences from the source repo to the target repo.
 
----
-
 ## First run
 
 After you have updated (```git pull```) the source repo on your computer, run the npx command.
@@ -69,14 +67,10 @@ If the two repos differ only by that much, it considers the two repos to be the 
 ## Configuration Ex
 If the owner of the source repo wants to **help your work**, he can also place a ```tmpl-followup.json``` file in the source repo, in which he can enter the values, in which case you need to enter **only the templateFolder** setting.
 
-----
-
 ## Hide files
 Hiding files is a useful trick for followup. When there is a file in the source system that you do not want to transfer (in its entirety) to the target repo, you can choose the option to hide this file. In any case, it hides the **current version** of the file (it stores the corresponding hash). When this file of the source repo **changes in the future**, the system will show it again for comparison (and it can be hidden again with the new hash)
 
 ps: There are cases when you take certain changes (with diff tool) but hide the rest.
-
-----
 
 ## Command line
 The system can also be operated with command line switches.
